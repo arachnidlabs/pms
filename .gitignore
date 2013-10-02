@@ -1,0 +1,5 @@
+pms.conf
+cn22.png
+*.pyc
+database.sqlite
+ppi_*.tif
