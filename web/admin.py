@@ -115,7 +115,7 @@ class PackageAdmin(admin.ModelAdmin):
         process.wait()
 
     def generate_posting(self, request, queryset):
-        posting = Posting()
+        posting = Posting(shipping_method=queryset[0].shipping_method)
         posting.save()
 
         queryset.update(posting=posting)
