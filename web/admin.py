@@ -115,10 +115,14 @@ class PackageAdmin(admin.ModelAdmin):
         process.wait()
 
     def generate_posting(self, request, queryset):
-        rm = get_rm_api()
-        rm.upload_posting(queryset)
-
         posting = Posting()
+        posting.save()
+
+        queryset.update(posting=posting)
+
+        rm = get_rm_api()
+        rm.upload_posting(queryset, posting.id)
+
     generate_posting.short_description = "Upload posting to Royal Mail"
 
 

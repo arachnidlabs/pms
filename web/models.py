@@ -151,5 +151,5 @@ class Package(models.Model):
 
 class Posting(models.Model):
     shipping_method = models.ForeignKey('ShippingMethod')
-    provider_id = models.CharField(max_length=255)
+    provider_id = models.CharField(max_length=255, null=True, blank=True)
 
