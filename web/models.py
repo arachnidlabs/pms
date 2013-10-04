@@ -56,7 +56,7 @@ class Order(models.Model):
 
     @property
     def country_code(self):
-        return countries.get(self.shipping_country, None)
+        return countries.get(self.shipping_country.upper(), None)
 
     @property
     def zone(self):
