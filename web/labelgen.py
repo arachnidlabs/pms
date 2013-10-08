@@ -1,6 +1,5 @@
 import cStringIO
 import datetime
-import os
 from reportlab.pdfgen import canvas
 from reportlab.lib import units
 
@@ -28,12 +27,13 @@ def draw_label(c, fromaddr, imagename, imagesize, sender_data, address):
     c.drawText(text)
 
     # Draw the PPI
-    c.drawImage(
-        imagename,
-        (93 - imagesize[0]) * units.mm,
-        (58 - imagesize[1]) * units.mm,
-        width=imagesize[0] * units.mm,
-        height=imagesize[1] * units.mm)
+    if imagename:
+        c.drawImage(
+            imagename,
+            (93 - imagesize[0]) * units.mm,
+            (58 - imagesize[1]) * units.mm,
+            width=imagesize[0] * units.mm,
+            height=imagesize[1] * units.mm)
 
     c.showPage()
 

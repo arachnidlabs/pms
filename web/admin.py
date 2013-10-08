@@ -76,13 +76,16 @@ class PackageAdmin(admin.ModelAdmin):
     inlines = (LineItemInline,)
     list_display = ('id', 'order', 'shipping_method', 'contents', 'shipping_weight', 'customs_value', 'packed', 'sent')
     list_filter = ('packed', 'sent')
-    actions = ('mark_packed', 'print_labels', 'generate_posting')
+    actions = ('mark_packed', 'print_labels', 'print_noppi_labels', 'generate_posting')
 
     def mark_packed(self, request, queryset):
         queryset.update(packed=True)
     mark_packed.short_description = "Mark as packed"
 
-    def print_labels(self, request, queryset):
+    def print_noppi_labels(self, request, queryset):
+        return self.print_labels(request, queryset, ppi=False)
+
+    def print_labels(self, request, queryset, ppi=True):
         fromaddr = config.config.get('labels', 'return_address')
         ppi_path = config.config.get('labels', 'image')
         ppi_size = (int(config.config.get('labels', 'image_width')),
@@ -94,8 +97,8 @@ class PackageAdmin(admin.ModelAdmin):
         for package in queryset:
             address_label = labelgen.generate_label(
                 fromaddr,
-                ppi_path,
-                ppi_size,
+                ppi_path if ppi else None,
+                ppi_size if ppi else None,
                 package.sender_info,
                 package.postal_address)
             self.run_command(addr_print_cmd, address_label)
