@@ -30,7 +30,7 @@ def import_orders():
         if created:
             num_new += 1
             for li in item['items']:
-                product, created = Product.objects.get_or_create(sku=li['sku'], defaults={'name': li['product']})
+                product, created = Product.objects.get_or_create(name=li['product'])
                 defaults = dict((k, li[k]) for k in (
                     'options', 'pre_order', 'price_total', 'price_unit', 'quantity', 'status'))
                 lineitem = LineItem(order=order, product=product, **defaults)
