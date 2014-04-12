@@ -17,20 +17,19 @@ def import_orders():
             'date', 'email', 'message', 'phone', 'shipping_city', 'shipping_country',
             'shipping_instructions', 'shipping_name', 'shipping_postcode', 'shipping_state',
             'shipping_street', 'total', 'total_discount', 'total_kickback', 'total_seller',
-            'total_shipping', 'total_subtotal', 'total_tindiefee'))
+            'total_shipping', 'total_subtotal', 'total_tindiefee', 'payment', 'refunded',
+            'tracking_code', 'tracking_url'))
         defaults['shipping_method'] = ShippingMethod.objects.get_or_create(name=item['shipping_service'])[0]
+        defaults['shipped'] = item['shipped'] or item['refunded']
         order, created = Order.objects.get_or_create(remote_order_id=item['number'], defaults=defaults)
-        order.payment = item['payment']
-        order.refunded = item['refunded']
-        order.shipped = item['shipped'] or item['refunded']
-        order.tracking_code = item['tracking_code']
-        order.tracking_url = item['tracking_url']
-        order.save()
-
-        if created:
+        if not created:
+            for k, v in defaults.iteritems():
+                setattr(order, k, v)
+            order.save()
+        else:
             num_new += 1
             for li in item['items']:
-                product, created = Product.objects.get_or_create(sku=li['sku'], defaults={'name': li['product']})
+                product, created = Product.objects.get_or_create(name=li['product'])
                 defaults = dict((k, li[k]) for k in (
                     'options', 'pre_order', 'price_total', 'price_unit', 'quantity', 'status'))
                 lineitem = LineItem(order=order, product=product, **defaults)
