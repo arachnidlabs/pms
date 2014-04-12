@@ -63,11 +63,11 @@ class Order(models.Model):
         if self.country_code == 'GB':
             return 'GB'
         elif self.country_code in europe_country_codes:
-            return 'EUP'
+            return 'EUF'
         elif self.country_code in world_zone_2_country_codes:
-            return 'SW2'
+            return 'RWE'
         else:
-            return 'SW1'
+            return 'RWJ'
 
     @property
     def sender_info(self):

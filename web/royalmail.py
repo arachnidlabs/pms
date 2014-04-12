@@ -24,7 +24,7 @@ POSTING_FIELDS = [
     'Country Identifier',
     'Residues',
     'Region',
-    'Single Weight Used',
+    'Container Type',
     'Consignment Reference Number',
     'Department',
     'Your Reference',
@@ -38,7 +38,8 @@ POSTING_FIELDS = [
     'Your Description',
     'Customer Reference',
     'Your Notes',
-    'Auto Confirm Order']
+    'Auto Confirm Order'
+]
 
 
 PostingKey = collections.namedtuple('PostingKey', [
@@ -94,6 +95,7 @@ class RoyalMailAPI(object):
                 'Number Of Items / Directs': len(packages),
                 'Class': posting.klass,
                 'Format': posting.format,
+                'Container Type': 'Bags',
                 'Country Identifier': posting.country_identifier,
                 'Your Reference': '%s' % (posting_id,),
                 'Your Notes': '; '.join(package.order.remote_order_id for package in packages),
