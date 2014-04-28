@@ -85,7 +85,7 @@ admin.site.register(Order, OrderAdmin)
 
 class PackageAdmin(admin.ModelAdmin):
     inlines = (LineItemInline,)
-    list_display = ('id', 'order', 'shipping_method', 'contents', 'shipping_weight', 'customs_value', 'packed', 'sent')
+    list_display = ('id', 'order', 'shipping_name', 'shipping_method', 'contents', 'shipping_weight', 'customs_value', 'packed', 'sent')
     list_filter = ('packed', 'sent')
     actions = ('mark_packed', 'print_labels', 'print_noppi_labels', 'generate_posting')
 
