@@ -44,6 +44,17 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = ('shipped',)
     actions = ('create_packages', 'mark_shipped')
     search_fields = ('remote_order_id',)
+    fieldsets = (
+        (None, {
+            'fields': ('remote_order_id', 'date', 'message', 'payment'),
+        }),
+        ('Shipping', {
+            'fields': ('shipped', 'email', 'phone', 'shipping_name', 'shipping_street', 'shipping_city', 'shipping_state', 'shipping_postcode', 'shipping_country', 'shipping_method', 'shipping_instructions', 'tracking_code', 'tracking_url'),
+        }),
+        ('Payment', {
+            'fields': ('refunded', 'total', 'total_discount', 'total_kickback', 'total_shipping', 'total_tindiefee', 'total_subtotal', 'total_seller'),
+        })
+    )
 
     def create_packages(self, request, queryset):
         for order in queryset:

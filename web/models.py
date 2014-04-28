@@ -11,11 +11,11 @@ class ShippingMethod(models.Model):
 
 
 class Order(models.Model):
-    remote_order_id = models.CharField(max_length=255)
+    remote_order_id = models.CharField(max_length=255, null=True, blank=True)
     date = models.DateTimeField()
     email = models.CharField(max_length=255)
     message = models.TextField(null=True, blank=True)
-    payment = models.CharField(max_length=255)
+    payment = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=255, blank=True, null=True)
     refunded = models.BooleanField()
     shipped = models.BooleanField()
@@ -25,7 +25,7 @@ class Order(models.Model):
     shipping_name = models.CharField(max_length=255)
     shipping_postcode = models.CharField(max_length=255)
     shipping_method = models.ForeignKey('ShippingMethod')
-    shipping_state = models.CharField(max_length=255)
+    shipping_state = models.CharField(max_length=255, blank=True)
     shipping_street = models.TextField()
     total = models.DecimalField(max_digits=8, decimal_places=2)
     total_discount = models.DecimalField(max_digits=8, decimal_places=2)
