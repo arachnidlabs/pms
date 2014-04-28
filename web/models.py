@@ -148,6 +148,10 @@ class Package(models.Model):
     def zone(self):
         return self.order.zone
 
+    @property
+    def shipping_name(self):
+        return self.order.shipping_name
+
 
 class Posting(models.Model):
     shipping_method = models.ForeignKey('ShippingMethod')
