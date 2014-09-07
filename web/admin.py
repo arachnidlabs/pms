@@ -3,12 +3,13 @@ import subprocess
 from decimal import Decimal
 from django.contrib import admin
 from django.shortcuts import redirect
-from web.models import ShippingMethod, Order, Product, LineItem, Package, Posting
+from web.models import ShippingMethod, Order, Product, LineItem, Package, Posting, TindieProduct, TindieProductMap
 from web import labelgen
 
 import config
 import tindie
 import royalmail
+import shipwire
 
 
 def get_tindie_api():
@@ -28,9 +29,36 @@ def get_rm_api():
         password=config.rmconfig.get('account', 'password'))
 
 
-admin.site.register(ShippingMethod)
-admin.site.register(Product)
+def get_shipwire_api():
+    username = config.shipwireconfig.get('auth', 'username')
+    password = config.shipwireconfig.get('auth', 'password')
+    host = config.shipwireconfig.get('shipwire', 'host')
+    return shipwire.ShipwireAPI(host, username, password)
+
+
 admin.site.register(Posting)
+
+
+class ShippingMethodAdmin(admin.ModelAdmin):
+    list_display = ('region', 'service_level', 'name')
+admin.site.register(ShippingMethod, ShippingMethodAdmin)
+
+
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('sku', 'name')
+admin.site.register(Product, ProductAdmin)
+
+
+class TindieProductMapInline(admin.TabularInline):
+    list_display = ('tindie_product', 'product', 'quantity')
+    model = TindieProductMap
+    extra = 1
+
+
+class TindieProductAdmin(admin.ModelAdmin):
+    inlines = (TindieProductMapInline,)
+    list_display = ('model_number', 'name')
+admin.site.register(TindieProduct, TindieProductAdmin)
 
 
 class LineItemInline(admin.TabularInline):
@@ -40,19 +68,26 @@ class LineItemInline(admin.TabularInline):
 
 class OrderAdmin(admin.ModelAdmin):
     inlines = (LineItemInline,)
-    list_display = ('remote_order_id', 'shipping_name', 'summary', 'total_seller', 'packed', 'shipped')
-    list_filter = ('shipped',)
+    list_display = ('remote_order_id', 'shipping_name', 'summary', 
+        'total_seller', 'shipped', 'submitted', 'backorder')
+    list_filter = ('shipped', 'submitted', 'backorder')
     actions = ('create_packages', 'mark_shipped')
     search_fields = ('remote_order_id',)
     fieldsets = (
         (None, {
-            'fields': ('remote_order_id', 'date', 'message', 'payment'),
+            'fields': ('remote_order_id', 'date', 'message', 'payment', 'backorder'),
         }),
         ('Shipping', {
-            'fields': ('shipped', 'email', 'phone', 'shipping_name', 'shipping_street', 'shipping_city', 'shipping_state', 'shipping_postcode', 'shipping_country', 'shipping_method', 'shipping_instructions', 'tracking_code', 'tracking_url'),
+            'fields': ('shipped', 'email', 'phone', 'shipping_name', 
+                'shipping_street', 'shipping_city', 'shipping_state', 
+                'shipping_postcode', 'shipping_country', 'shipping_method', 
+                'shipping_instructions', 'tracking_code', 'tracking_url',
+                'submitted', 'shipwire_id'),
         }),
         ('Payment', {
-            'fields': ('refunded', 'total', 'total_discount', 'total_kickback', 'total_shipping', 'total_tindiefee', 'total_subtotal', 'total_seller'),
+            'fields': ('refunded', 'total', 'total_discount', 'total_kickback', 
+                'total_shipping', 'total_tindiefee', 'total_subtotal', 
+                'total_seller'),
         })
     )
 
@@ -63,7 +98,11 @@ class OrderAdmin(admin.ModelAdmin):
     create_packages.short_description = "Create packages"
 
     def create_order_packages(self, order):
-        package = Package(order=order, shipping_method=order.shipping_method, shipping_weight=0, customs_value=Decimal(0))
+        package = Package(
+            order=order, 
+            shipping_method=order.shipping_method, 
+            shipping_weight=0, 
+            customs_value=Decimal(0))
         package.save()
         for lineitem in order.lineitem_set.all():
             if not lineitem.package:
@@ -85,9 +124,11 @@ admin.site.register(Order, OrderAdmin)
 
 class PackageAdmin(admin.ModelAdmin):
     inlines = (LineItemInline,)
-    list_display = ('id', 'order', 'shipping_name', 'shipping_method', 'contents', 'shipping_weight', 'customs_value', 'packed', 'sent')
+    list_display = ('id', 'order', 'shipping_name', 'shipping_method', 
+        'contents', 'shipping_weight', 'customs_value', 'packed', 'sent')
     list_filter = ('packed', 'sent')
-    actions = ('mark_packed', 'print_labels', 'print_noppi_labels', 'generate_posting')
+    actions = ('mark_packed', 'print_labels', 'print_noppi_labels', 
+        'generate_posting')
 
     def mark_packed(self, request, queryset):
         queryset.update(packed=True)
@@ -138,6 +179,4 @@ class PackageAdmin(admin.ModelAdmin):
         rm.upload_posting(queryset, posting.id)
 
     generate_posting.short_description = "Upload posting to Royal Mail"
-
-
 admin.site.register(Package, PackageAdmin)

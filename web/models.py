@@ -3,8 +3,24 @@ from django.db import models
 from web.countries import countries, europe_country_codes, world_zone_2_country_codes
 
 
+def country_to_region(country_code):
+    if country_code in europe_country_codes:
+        return 'EU'
+    else:
+        return 'Everywhere Else'
+
+
 class ShippingMethod(models.Model):
     name = models.CharField(max_length=255)
+    region = models.CharField(max_length=255, null=True, blank=True)
+    service_level = models.CharField(max_length=8, null=True, blank=True)
+
+    @classmethod
+    def find(cls, name, region):
+        try:
+            return cls.objects.get(name=name, region=region)
+        except cls.DoesNotExist:
+            return cls.objects.get(name=name, region=country_to_region(region))
 
     def __unicode__(self):
         return self.name
@@ -17,8 +33,8 @@ class Order(models.Model):
     message = models.TextField(null=True, blank=True)
     payment = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=255, blank=True, null=True)
-    refunded = models.BooleanField()
-    shipped = models.BooleanField()
+    refunded = models.BooleanField(default=False)
+    shipped = models.BooleanField(default=False)
     shipping_city = models.CharField(max_length=255)
     shipping_country = models.CharField(max_length=255)
     shipping_instructions = models.TextField(blank=True, null=True)
@@ -36,23 +52,26 @@ class Order(models.Model):
     total_tindiefee = models.DecimalField(max_digits=8, decimal_places=2)
     tracking_code = models.CharField(max_length=255, null=True, blank=True)
     tracking_url = models.CharField(max_length=255, null=True, blank=True)
+    shipwire_id = models.CharField(max_length=255, null=True, blank=True)
+    submitted = models.BooleanField(default=False)
+    backorder = models.BooleanField(default=False)
 
     def __unicode__(self):
         return "Order #%s" % (self.remote_order_id,)
 
     @property
     def summary(self):
-        return ", ".join(lineitem.summary for lineitem in self.lineitem_set.all())
+        return ", ".join(lineitem.summary for lineitem in self.lineitems.all())
 
     @property
     def packed(self):
         total = 0
         total_packed = 0
-        for lineitem in self.lineitem_set.all():
+        for lineitem in self.lineitems.all():
             total += 1
             if lineitem.package and lineitem.package.packed:
                 total_packed += 1
-        return "%d/%d" % (total, total_packed)
+        return "%d/%d" % (total_packed, total)
 
     @property
     def country_code(self):
@@ -93,15 +112,30 @@ class Product(models.Model):
     customs_value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
 
     def __unicode__(self):
-        return self.name
+        return self.sku
+
+
+class TindieProduct(models.Model):
+    """Maps Tindie products to actual SKUs."""
+    tindie_id = models.IntegerField()
+    model_number = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    shipwire_rates = models.BooleanField(default=False)
+
+
+class TindieProductMap(models.Model):
+    """Maps Tindie products to SKUs."""
+    tindie_product = models.ForeignKey(TindieProduct, related_name='skus')
+    product = models.ForeignKey(Product, related_name='tindie_products')
+    quantity = models.IntegerField()
 
 
 class LineItem(models.Model):
-    order = models.ForeignKey('Order')
+    order = models.ForeignKey('Order', related_name='lineitems')
     package = models.ForeignKey('Package', null=True, blank=True, on_delete=models.SET_NULL)
     product = models.ForeignKey('Product')
     options = models.TextField(blank=True, null=True)
-    pre_order = models.BooleanField()
+    pre_order = models.BooleanField(default=False)
     price_total = models.DecimalField(max_digits=8, decimal_places=2)
     price_unit = models.DecimalField(max_digits=8, decimal_places=2)
     quantity = models.IntegerField()
@@ -134,7 +168,7 @@ class Package(models.Model):
 
     @property
     def contents(self):
-        return ", ".join(lineitem.summary for lineitem in self.lineitem_set.all())
+        return ", ".join(lineitem.summary for lineitem in self.lineitems.all())
 
     @property
     def sender_info(self):
