@@ -1,0 +1,5 @@
+django
+lxml
+reportlab
+requests
+beautifulsoup4
