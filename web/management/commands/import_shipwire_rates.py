@@ -60,18 +60,21 @@ extra_pick_cost = float(config.shipwireconfig.get('shipwire', 'extrapick'))
 class Command(BaseCommand):
     help = "Generate Tindie shipping rates from Shipwire quotes"
 
-    def get_rates(self, product_id, pick_list, region, address):
+    def get_rates(self, product_id, warehouse, pick_list, region, address):
         rates = []
 
         pick_list_1 = [shipwire.ShipwireItem(sku, qty) for sku, qty in pick_list]
-        min_rates = self.shipwire.get_quotes(address, pick_list_1)
+        min_rates = self.shipwire.get_quotes(address, pick_list_1, warehouse=warehouse)
         pick_list_5 = [shipwire.ShipwireItem(sku, qty * 5) for sku, qty in pick_list]
-        max_rates = self.shipwire.get_quotes(address, pick_list_5)
+        max_rates = self.shipwire.get_quotes(address, pick_list_5, warehouse=warehouse)
 
-        methods = set(min_rates.keys()) & set(max_rates.keys())
-        for method in methods:
+        for method in min_rates:
             min_rate = min_rates[method]
-            max_rate = max_rates[method]
+            if method in max_rates:
+                max_rate = max_rates[method]
+            else:
+                max_rate = dict(min_rates[method])
+                max_rate['cost'] *= 5
 
             if min_rate['mindays'] != min_rate['maxdays']:
                 name = "%s (%s - %s days)" % (shipwire_service_names[method], min_rate['mindays'], min_rate['maxdays'])
@@ -105,7 +108,7 @@ class Command(BaseCommand):
             print "  Pick list: " + ', '.join("%s x %s" % pick for pick in pick_list)
             for region, address in sample_addresses:
                 print "  Processing region %s" % (region,)
-                for rate in self.get_rates(product.tindie_id, pick_list, region, address):
+                for rate in self.get_rates(product.tindie_id, product.shipwire_warehouse, pick_list, region, address):
                     try:
                         self.tindie.add_shipping_rate(*rate)
                     except Exception, e:

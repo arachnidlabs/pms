@@ -121,6 +121,7 @@ class TindieProduct(models.Model):
     model_number = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     shipwire_rates = models.BooleanField(default=False)
+    shipwire_warehouse = models.CharField(max_length=255, null=True, blank=True)
 
 
 class TindieProductMap(models.Model):
@@ -132,7 +133,7 @@ class TindieProductMap(models.Model):
 
 class LineItem(models.Model):
     order = models.ForeignKey('Order', related_name='lineitems')
-    package = models.ForeignKey('Package', null=True, blank=True, on_delete=models.SET_NULL)
+    package = models.ForeignKey('Package', null=True, blank=True, on_delete=models.SET_NULL, related_name='lineitems')
     product = models.ForeignKey('Product')
     options = models.TextField(blank=True, null=True)
     pre_order = models.BooleanField(default=False)

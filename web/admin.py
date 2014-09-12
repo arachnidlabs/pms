@@ -104,7 +104,7 @@ class OrderAdmin(admin.ModelAdmin):
             shipping_weight=0, 
             customs_value=Decimal(0))
         package.save()
-        for lineitem in order.lineitem_set.all():
+        for lineitem in order.lineitems.all():
             if not lineitem.package:
                 package.shipping_weight += lineitem.total_weight
                 package.customs_value += lineitem.total_value

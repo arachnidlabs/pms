@@ -108,14 +108,16 @@ class ShipwireAPI(object):
                 % (responsedata.ErrorMessage.text, responsedata.Status.text))
         return soup
 
-    def get_quotes(self, address, items):
+    def get_quotes(self, address, items, warehouse=None):
+        orderitems = [address.to_elements()]
+        if warehouse:
+            orderitems.append(E.Warehouse(warehouse))
+        orderitems.extend(item.to_elements(i) for i, item in enumerate(items))
+
         request = E.RateRequest(
             E.Username(self.username),
             E.Password(self.password),
-            E.Order(
-                address.to_elements(),
-                *[item.to_elements(i) for i, item in enumerate(items)]
-            )
+            E.Order(*orderitems),
         )
         response = self.make_request("/RateServices.php", request,
                                      "RateResponse")
