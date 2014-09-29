@@ -15,6 +15,7 @@ class Command(BaseCommand):
     	          	backorder=False,
     	          	shipped=False,
     		        submitted=False,
+                    refunded=False,
     		        shipping_method__service_level__isnull=False)}
     	if not orders:
     		print "Nothing to send."

@@ -160,5 +160,11 @@ class ShipwireAPI(object):
         response = self.make_request("/TrackingServices.php", request,
                                      "TrackingUpdateResponse")
         tracking = [response.find("Order", shipwireId=sw_id) for sw_id in sw_ids]
-        return [(track['shipped'] == 'YES', track.TrackingNumber.text if track.TrackingNumber else None)
-                for track in tracking]
+        ret = []
+        for track, sw_id in zip(tracking, sw_ids):
+            if track is None:
+                logging.warn("Order %s not found in shipwire", sw_id)
+            else:
+                ret.append((track['shipped'] == 'YES', track.TrackingNumber.text if track.TrackingNumber else None))
+        return ret
+

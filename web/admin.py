@@ -72,7 +72,7 @@ class OrderAdmin(admin.ModelAdmin):
         'total_seller', 'shipped', 'submitted', 'backorder')
     list_filter = ('shipped', 'submitted', 'backorder')
     actions = ('create_packages', 'mark_shipped')
-    search_fields = ('remote_order_id',)
+    search_fields = ('remote_order_id', 'shipwire_id')
     fieldsets = (
         (None, {
             'fields': ('remote_order_id', 'date', 'message', 'payment', 'backorder'),
