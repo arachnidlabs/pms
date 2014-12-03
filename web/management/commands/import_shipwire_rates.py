@@ -29,6 +29,18 @@ sample_addresses = [
         state="Ontario",
         country="CA",
         zip="K1A 0B1")),
+    ("HR", shipwire.ShipwireAddress(
+        address1="Krapinska 17",
+        city="Zagreb",
+        state="Zagreb",
+        country="HR",
+        zip="31225")),
+    ("MY", shipwire.ShipwireAddress(
+        address1="Giant Hypermarket Sibu",
+        city="Sibu",
+        state="Sarawak",
+        country="MY",
+        zip="96000")),
     ("Everywhere Else", shipwire.ShipwireAddress(
         address1="173 Park Road",
         address2="Johnsonville",
@@ -88,7 +100,10 @@ class Command(BaseCommand):
                 })
 
             base_cost = round((min_rate['cost'] + first_pick_cost) * 1.1, 2)
-            incremental_cost = round(((max_rate['cost'] - min_rate['cost']) / 4 + extra_pick_cost) * 1.1, 2)
+            if min_rate['warehouse'] == 'UK':
+                incremental_cost = round(((max_rate['cost'] - min_rate['cost']) / 4 + first_pick_cost) * 1.1, 2)
+            else:
+                incremental_cost = round(((max_rate['cost'] - min_rate['cost']) / 4 + extra_pick_cost) * 1.1, 2)
             print "    %s: $%.2f + $%.2f" % (method.name, base_cost, incremental_cost)
             rates.append((region, shipwire_carrier_id, method.name, base_cost, incremental_cost, [product_id]))
 

@@ -254,6 +254,7 @@ country_codes = {
 }
 
 countries = dict((v, k) for k, v in country_codes.items())
+countries['RUSSIA'] = 'RU'
 
 europe_country_codes = set([
     'AL', 'AD', 'AM', 'AT', 'BY', 'BE', 'BA', 'BG', 'CH', 'CY', 'CZ', 'DE',
